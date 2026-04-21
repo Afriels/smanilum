@@ -106,6 +106,15 @@ create table if not exists public.gallery (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.website_settings (
+  id uuid primary key default gen_random_uuid(),
+  school_id uuid not null references public.schools(id) on delete cascade,
+  key text not null,
+  value text,
+  created_at timestamptz not null default now(),
+  unique (school_id, key)
+);
+
 create table if not exists public.payments (
   id uuid primary key default gen_random_uuid(),
   school_id uuid not null references public.schools(id) on delete cascade,
@@ -185,6 +194,7 @@ alter table public.gallery enable row level security;
 alter table public.payments enable row level security;
 alter table public.ppdb enable row level security;
 alter table public.subscriptions enable row level security;
+alter table public.website_settings enable row level security;
 
 create policy "public read schools" on public.schools
 for select using (true);
@@ -298,6 +308,21 @@ for select using (
   school_id = public.current_school_id()
 );
 
+create policy "tenant website settings read" on public.website_settings
+for select using (true);
+
+create policy "tenant website settings manage" on public.website_settings
+for all using (
+  school_id = public.current_school_id()
+  and exists (
+    select 1 from public.users me
+    where me.id = auth.uid()
+      and me.school_id = public.current_school_id()
+      and me.role in ('super_admin', 'admin')
+  )
+)
+with check (school_id = public.current_school_id());
+
 create policy "super admins manage subscriptions" on public.subscriptions
 for all using (
   exists (
@@ -333,6 +358,10 @@ insert into storage.buckets (id, name, public)
 values ('ppdb-documents', 'ppdb-documents', false)
 on conflict (id) do nothing;
 
+insert into storage.buckets (id, name, public)
+values ('images', 'images', true)
+on conflict (id) do nothing;
+
 create policy "tenant assets read" on storage.objects
 for select using (bucket_id = 'school-assets');
 
@@ -361,4 +390,18 @@ for select using (
 create policy "tenant ppdb docs upload" on storage.objects
 for insert with check (
   bucket_id = 'ppdb-documents'
+);
+
+create policy "images public read" on storage.objects
+for select using (bucket_id = 'images');
+
+create policy "images admin upload" on storage.objects
+for insert with check (
+  bucket_id = 'images'
+  and exists (
+    select 1 from public.users me
+    where me.id = auth.uid()
+      and me.school_id = public.current_school_id()
+      and me.role in ('super_admin', 'admin')
+  )
 );

@@ -11,6 +11,7 @@ export function NewsForm() {
       <form action={createNewsAction} className="mt-6 grid gap-4">
         <Input name="title" placeholder="Judul berita" required />
         <Input name="slug" placeholder="slug-berita" required />
+        <Input name="cover_image" type="file" accept="image/png,image/jpeg,image/webp" />
         <Textarea name="excerpt" placeholder="Ringkasan berita" required />
         <Textarea name="content" placeholder="Konten lengkap berita" required />
         <SubmitButton label="Simpan berita" pendingLabel="Menyimpan..." className="w-full sm:w-fit" />

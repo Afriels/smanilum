@@ -3,14 +3,14 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Card } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { requireTenant } from "@/lib/tenant";
+import { getWebsiteSettings } from "@/lib/data";
 
 export default async function PPDBPage() {
-  const tenant = await requireTenant();
+  const { tenant, content } = await getWebsiteSettings();
 
   return (
     <main>
-      <SiteHeader school={tenant} />
+      <SiteHeader school={tenant} content={content} />
       <section className="section-shell py-12">
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
@@ -34,7 +34,7 @@ export default async function PPDBPage() {
           <PPDBForm />
         </div>
       </section>
-      <SiteFooter school={tenant} />
+      <SiteFooter school={tenant} content={content} />
     </main>
   );
 }

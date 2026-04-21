@@ -1,27 +1,33 @@
+import type { Metadata } from "next";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Card } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { requireTenant } from "@/lib/tenant";
+import { getWebsiteSettings } from "@/lib/data";
+import { buildPageMetadata } from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata("contact", "/contact");
+}
 
 export default async function ContactPage() {
-  const tenant = await requireTenant();
+  const { tenant, content } = await getWebsiteSettings();
 
   return (
     <main>
-      <SiteHeader school={tenant} />
+      <SiteHeader school={tenant} content={content} />
       <section className="section-shell py-12">
         <SectionHeading
           eyebrow="Kontak"
-          title="Hubungi tim sekolah"
-          description="Halaman kontak tenant sekolah yang bisa dikustomisasi dari data profil sekolah."
+          title={content.contactTitle}
+          description={content.contactDescription}
         />
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {[
-            { icon: Mail, label: "Email", value: tenant.contact_email ?? "-" },
-            { icon: Phone, label: "Telepon", value: tenant.contact_phone ?? "-" },
-            { icon: MapPin, label: "Alamat", value: tenant.address ?? "-" }
+            { icon: Mail, label: "Email", value: content.contactEmail || tenant.contact_email || "-" },
+            { icon: Phone, label: "Telepon", value: content.contactPhone || tenant.contact_phone || "-" },
+            { icon: MapPin, label: "Alamat", value: content.contactAddress || tenant.address || "-" }
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -36,7 +42,7 @@ export default async function ContactPage() {
           })}
         </div>
       </section>
-      <SiteFooter school={tenant} />
+      <SiteFooter school={tenant} content={content} />
     </main>
   );
 }

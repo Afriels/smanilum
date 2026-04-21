@@ -15,12 +15,16 @@ export async function getCurrentProfile() {
 
   const tenant = await requireTenant();
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("users")
     .select("*")
     .eq("id", user.id)
     .eq("school_id", tenant.id)
     .maybeSingle<Profile>();
+
+  if (error) {
+    console.error("Failed to fetch current profile", error);
+  }
 
   return data ?? null;
 }

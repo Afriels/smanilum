@@ -1,20 +1,26 @@
+import type { Metadata } from "next";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Card } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { getPublicData } from "@/lib/data";
+import { buildPageMetadata } from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata("gallery", "/gallery");
+}
 
 export default async function GalleryPage() {
-  const { tenant, gallery } = await getPublicData();
+  const { tenant, content, gallery } = await getPublicData();
 
   return (
     <main>
-      <SiteHeader school={tenant} />
+      <SiteHeader school={tenant} content={content} />
       <section className="section-shell py-12">
         <SectionHeading
-          eyebrow="Galeri"
-          title="Dokumentasi kegiatan sekolah"
-          description="Siap terhubung ke Supabase Storage untuk penyimpanan foto dan dokumentasi event."
+          eyebrow={content.homeGalleryEyebrow}
+          title={content.homeGalleryTitle}
+          description={content.homeGalleryDescription}
         />
         <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {gallery.map((item) => (
@@ -31,7 +37,7 @@ export default async function GalleryPage() {
           ))}
         </div>
       </section>
-      <SiteFooter school={tenant} />
+      <SiteFooter school={tenant} content={content} />
     </main>
   );
 }

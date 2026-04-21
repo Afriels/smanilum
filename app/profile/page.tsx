@@ -1,26 +1,32 @@
+import type { Metadata } from "next";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Card } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { requireTenant } from "@/lib/tenant";
+import { getWebsiteSettings } from "@/lib/data";
+import { buildPageMetadata } from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata("profile", "/profile");
+}
 
 export default async function ProfilePage() {
-  const tenant = await requireTenant();
+  const { tenant, content } = await getWebsiteSettings();
 
   return (
     <main>
-      <SiteHeader school={tenant} />
+      <SiteHeader school={tenant} content={content} />
       <section className="section-shell py-12">
         <SectionHeading
-          eyebrow="Profil Sekolah"
-          title={tenant.name}
-          description={tenant.description ?? "Sekolah modern dengan pengelolaan akademik dan layanan digital yang terintegrasi."}
+          eyebrow={content.aboutEyebrow}
+          title={content.aboutTitle}
+          description={content.aboutText}
         />
         <div className="mt-8 grid gap-4 lg:grid-cols-3">
           {[
-            { title: "Visi", text: "Membangun lulusan berkarakter, unggul, dan siap beradaptasi dengan perkembangan zaman." },
-            { title: "Misi", text: "Menghadirkan proses belajar yang efektif, kolaboratif, dan terukur berbasis teknologi." },
-            { title: "Nilai", text: "Integritas, prestasi, disiplin, kolaborasi, dan pelayanan prima untuk seluruh warga sekolah." }
+            { title: content.profileVisionTitle, text: content.profileVisionText },
+            { title: content.profileMissionTitle, text: content.profileMissionText },
+            { title: content.profileValuesTitle, text: content.profileValuesText }
           ].map((item) => (
             <Card key={item.title} className="rounded-[28px] bg-white">
               <h3 className="text-xl font-semibold text-slate-950">{item.title}</h3>
@@ -29,7 +35,7 @@ export default async function ProfilePage() {
           ))}
         </div>
       </section>
-      <SiteFooter school={tenant} />
+      <SiteFooter school={tenant} content={content} />
     </main>
   );
 }

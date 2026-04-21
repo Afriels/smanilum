@@ -1,7 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Building2, MenuSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { School } from "@/lib/types";
+import type { School, WebsiteContent } from "@/lib/types";
 
 const navigation = [
   { href: "/", label: "Beranda" },
@@ -11,13 +12,17 @@ const navigation = [
   { href: "/contact", label: "Kontak" }
 ];
 
-export function SiteHeader({ school }: { school: School }) {
+export function SiteHeader({ school, content }: { school: School; content: WebsiteContent }) {
   return (
     <header className="section-shell sticky top-0 z-30 py-4">
       <div className="glass-panel flex items-center justify-between rounded-4xl px-5 py-4">
         <Link href="/" className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-gradient text-white">
-            <Building2 className="h-5 w-5" />
+            {content.schoolLogoUrl ? (
+              <Image src={content.schoolLogoUrl} alt={school.name} width={44} height={44} className="rounded-2xl object-cover" />
+            ) : (
+              <Building2 className="h-5 w-5" />
+            )}
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-900">{school.name}</p>
@@ -38,7 +43,7 @@ export function SiteHeader({ school }: { school: School }) {
             <Link href="/login">Masuk</Link>
           </Button>
           <Button className="rounded-full">
-            <Link href="/ppdb">Daftar PPDB</Link>
+            <Link href={content.heroPrimaryUrl || "/ppdb"}>{content.heroPrimaryLabel || "Daftar PPDB"}</Link>
           </Button>
         </div>
 
