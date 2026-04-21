@@ -85,6 +85,44 @@ export const gallerySchema = z.object({
   category: z.string().min(2)
 });
 
+export const pageBlocksPayloadSchema = z.array(
+  z.object({
+    id: z.string().min(1),
+    page_slug: z.enum(["home", "profile", "news", "gallery", "contact"]),
+    block_type: z.enum([
+      "hero",
+      "rich_text",
+      "feature_cards",
+      "news_feed",
+      "activities_feed",
+      "gallery_feed",
+      "contact_cards"
+    ]),
+    title: z.string().nullable(),
+    subtitle: z.string().nullable(),
+    image_url: z.string().nullable(),
+    button_label: z.string().nullable(),
+    button_url: z.string().nullable(),
+    position: z.number().int().min(0),
+    is_visible: z.boolean(),
+    config: z
+      .object({
+        body: z.string().optional(),
+        itemCount: z.number().int().optional(),
+        layout: z.enum(["grid", "stack"]).optional(),
+        cards: z
+          .array(
+            z.object({
+              title: z.string(),
+              text: z.string()
+            })
+          )
+          .optional()
+      })
+      .passthrough()
+  })
+);
+
 export const studentSchema = z.object({
   nis: z.string().min(3),
   full_name: z.string().min(3),

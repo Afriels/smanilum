@@ -12,6 +12,7 @@ import {
   loginSchema,
   newsSchema,
   paymentSchema,
+  pageBlocksPayloadSchema,
   ppdbSchema,
   studentSchema,
   websiteSettingsSchema
@@ -239,5 +240,54 @@ export async function createGalleryAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/gallery");
+  revalidatePath("/dashboard/settings");
+}
+
+export async function savePageBuilderAction(formData: FormData) {
+  await requireAuth(["super_admin", "admin"]);
+  const supabase = createClient();
+  const tenant = await requireTenant();
+  const pageSlug = String(formData.get("page_slug") ?? "");
+  const rawBlocks = String(formData.get("blocks_json") ?? "[]");
+  const parsedBlocks = pageBlocksPayloadSchema.parse(JSON.parse(rawBlocks));
+  const filteredBlocks = parsedBlocks.filter((block) => block.page_slug === pageSlug);
+
+  const { error: deleteError } = await supabase
+    .from("page_blocks")
+    .delete()
+    .eq("school_id", tenant.id)
+    .eq("page_slug", pageSlug);
+
+  if (deleteError) {
+    throw new Error(deleteError.message);
+  }
+
+  if (filteredBlocks.length > 0) {
+    const { error: insertError } = await supabase.from("page_blocks").insert(
+      filteredBlocks.map((block, index) => ({
+        school_id: tenant.id,
+        page_slug: block.page_slug,
+        block_type: block.block_type,
+        title: block.title,
+        subtitle: block.subtitle,
+        image_url: block.image_url,
+        button_label: block.button_label,
+        button_url: block.button_url,
+        config: block.config,
+        position: index,
+        is_visible: block.is_visible
+      }))
+    );
+
+    if (insertError) {
+      throw new Error(insertError.message);
+    }
+  }
+
+  revalidatePath("/");
+  revalidatePath("/profile");
+  revalidatePath("/news");
+  revalidatePath("/gallery");
+  revalidatePath("/contact");
   revalidatePath("/dashboard/settings");
 }

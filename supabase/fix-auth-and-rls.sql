@@ -344,7 +344,25 @@ create table if not exists public.website_settings (
   unique (school_id, key)
 );
 
+create table if not exists public.page_blocks (
+  id uuid primary key default gen_random_uuid(),
+  school_id uuid not null references public.schools(id) on delete cascade,
+  page_slug text not null,
+  block_type text not null,
+  title text,
+  subtitle text,
+  image_url text,
+  button_label text,
+  button_url text,
+  config jsonb not null default '{}'::jsonb,
+  position integer not null default 0,
+  is_visible boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.website_settings enable row level security;
+alter table public.page_blocks enable row level security;
 
 drop policy if exists "tenant website settings read" on public.website_settings;
 create policy "tenant website settings read" on public.website_settings
@@ -353,6 +371,23 @@ using (true);
 
 drop policy if exists "tenant website settings manage" on public.website_settings;
 create policy "tenant website settings manage" on public.website_settings
+for all
+using (
+  school_id = public.current_school_id()
+  and public.current_role() in ('super_admin', 'admin')
+)
+with check (
+  school_id = public.current_school_id()
+  and public.current_role() in ('super_admin', 'admin')
+);
+
+drop policy if exists "tenant page blocks read" on public.page_blocks;
+create policy "tenant page blocks read" on public.page_blocks
+for select
+using (true);
+
+drop policy if exists "tenant page blocks manage" on public.page_blocks;
+create policy "tenant page blocks manage" on public.page_blocks
 for all
 using (
   school_id = public.current_school_id()

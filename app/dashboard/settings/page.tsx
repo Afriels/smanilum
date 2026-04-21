@@ -1,13 +1,17 @@
 import { requireAuth } from "@/lib/auth";
 import { GalleryForm } from "@/components/forms/gallery-form";
 import { WebsiteSettingsForm } from "@/components/forms/website-settings-form";
+import { PageBuilderStudio } from "@/components/page-builder/page-builder-studio";
 import { Card } from "@/components/ui/card";
 import { DataTable } from "@/components/dashboard/data-table";
-import { getDashboardCollections } from "@/lib/data";
+import { getDashboardCollections, getPageBuilderData } from "@/lib/data";
 
 export default async function DashboardSettingsPage() {
   await requireAuth(["super_admin", "admin"]);
-  const { tenant, settings, gallery } = await getDashboardCollections();
+  const [{ tenant, settings, gallery, news, activities }, { pageBlocks }] = await Promise.all([
+    getDashboardCollections(),
+    getPageBuilderData()
+  ]);
 
   return (
     <div className="grid gap-6">
@@ -20,6 +24,7 @@ export default async function DashboardSettingsPage() {
         </div>
       </Card>
       <WebsiteSettingsForm settings={settings} />
+      <PageBuilderStudio initialBlocks={pageBlocks} news={news} activities={activities} gallery={gallery} />
       <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
         <GalleryForm />
         <DataTable

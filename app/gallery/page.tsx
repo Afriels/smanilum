@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
+import { PageBlocksRenderer } from "@/components/page-builder/page-blocks-renderer";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { Card } from "@/components/ui/card";
-import { SectionHeading } from "@/components/ui/section-heading";
-import { getPublicData } from "@/lib/data";
+import { getPageBlocks, getPublicData } from "@/lib/data";
 import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -11,32 +10,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function GalleryPage() {
-  const { tenant, content, gallery } = await getPublicData();
+  const [{ tenant, content, news, activities, gallery }, { blocks }] = await Promise.all([
+    getPublicData(),
+    getPageBlocks("gallery")
+  ]);
 
   return (
     <main>
       <SiteHeader school={tenant} content={content} />
-      <section className="section-shell py-12">
-        <SectionHeading
-          eyebrow={content.homeGalleryEyebrow}
-          title={content.homeGalleryTitle}
-          description={content.homeGalleryDescription}
-        />
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {gallery.map((item) => (
-            <Card key={item.id} className="rounded-[28px] bg-white p-4">
-              <div
-                className="h-56 rounded-3xl bg-cover bg-center"
-                style={{ backgroundImage: `url(${item.image_url})` }}
-              />
-              <div className="mt-4">
-                <p className="text-sm text-brand-700">{item.category}</p>
-                <h3 className="mt-1 text-lg font-semibold text-slate-950">{item.title}</h3>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
+      <PageBlocksRenderer blocks={blocks} news={news} activities={activities} gallery={gallery} />
       <SiteFooter school={tenant} content={content} />
     </main>
   );

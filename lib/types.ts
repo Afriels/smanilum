@@ -5,6 +5,15 @@ export type SubmissionStatus = "pending" | "accepted" | "rejected";
 export type PaymentStatus = "pending" | "paid" | "failed";
 
 export type SubscriptionPlan = "Basic" | "Pro" | "Premium";
+export type PageSlug = "home" | "profile" | "news" | "gallery" | "contact";
+export type PageBlockType =
+  | "hero"
+  | "rich_text"
+  | "feature_cards"
+  | "news_feed"
+  | "activities_feed"
+  | "gallery_feed"
+  | "contact_cards";
 
 export interface School {
   id: string;
@@ -160,6 +169,28 @@ export interface WebsiteContent {
   seoContactTitle: string;
   seoContactDescription: string;
   seoContactKeywords: string;
+}
+
+export interface PageBlockConfig {
+  body?: string;
+  cards?: Array<{ title: string; text: string }>;
+  itemCount?: number;
+  layout?: "grid" | "stack";
+}
+
+export interface PageBlock {
+  id: string;
+  school_id: string;
+  page_slug: PageSlug;
+  block_type: PageBlockType;
+  title: string | null;
+  subtitle: string | null;
+  image_url: string | null;
+  button_label: string | null;
+  button_url: string | null;
+  config: PageBlockConfig;
+  position: number;
+  is_visible: boolean;
 }
 
 export interface Profile {

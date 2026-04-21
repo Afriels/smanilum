@@ -6,6 +6,8 @@ import type {
   GalleryItem,
   NewsItem,
   PaymentItem,
+  PageBlock,
+  PageSlug,
   PPDBItem,
   School,
   StudentItem,
@@ -84,6 +86,8 @@ const WEBSITE_SETTING_DEFAULTS: WebsiteSettingsMap = {
 };
 
 export const WEBSITE_SETTING_FIELDS = Object.keys(WEBSITE_SETTING_DEFAULTS) as Array<keyof WebsiteSettingsMap>;
+
+const PAGE_SLUGS: PageSlug[] = ["home", "profile", "news", "gallery", "contact"];
 
 function normalizeSettings(rows: WebsiteSettingRow[] | null) {
   const settings: WebsiteSettingsMap = { ...WEBSITE_SETTING_DEFAULTS };
@@ -228,6 +232,249 @@ export async function getPublicData() {
   };
 }
 
+function coercePageBlocks(data: any[] | null): PageBlock[] {
+  return (data ?? []).map((block) => ({
+    ...block,
+    config:
+      block.config && typeof block.config === "object" && !Array.isArray(block.config)
+        ? block.config
+        : {}
+  })) as PageBlock[];
+}
+
+function getDefaultPageBlocks(
+  page: PageSlug,
+  school: School,
+  content: WebsiteContent
+): PageBlock[] {
+  const schoolId = school.id;
+
+  const defaults: Record<PageSlug, PageBlock[]> = {
+    home: [
+      {
+        id: "default-home-hero",
+        school_id: schoolId,
+        page_slug: "home",
+        block_type: "hero",
+        title: content.heroTitle,
+        subtitle: content.heroSubtitle,
+        image_url: content.heroBackgroundImage || null,
+        button_label: content.heroPrimaryLabel,
+        button_url: content.heroPrimaryUrl,
+        config: {},
+        position: 0,
+        is_visible: true
+      },
+      {
+        id: "default-home-features",
+        school_id: schoolId,
+        page_slug: "home",
+        block_type: "feature_cards",
+        title: content.homeFeatureTitle,
+        subtitle: content.homeFeatureDescription,
+        image_url: null,
+        button_label: null,
+        button_url: null,
+        config: {
+          cards: content.homeFeatureCards.map((text, index) => ({
+            title: `Feature ${index + 1}`,
+            text
+          }))
+        },
+        position: 1,
+        is_visible: !content.homeHiddenSections.includes("features")
+      },
+      {
+        id: "default-home-news",
+        school_id: schoolId,
+        page_slug: "home",
+        block_type: "news_feed",
+        title: content.homeNewsTitle,
+        subtitle: content.homeNewsDescription,
+        image_url: null,
+        button_label: null,
+        button_url: null,
+        config: { itemCount: 6, layout: "grid" },
+        position: 2,
+        is_visible: !content.homeHiddenSections.includes("news")
+      },
+      {
+        id: "default-home-activities",
+        school_id: schoolId,
+        page_slug: "home",
+        block_type: "activities_feed",
+        title: content.homeActivitiesTitle,
+        subtitle: content.homeActivitiesDescription,
+        image_url: null,
+        button_label: null,
+        button_url: null,
+        config: { itemCount: 6, layout: "stack" },
+        position: 3,
+        is_visible: !content.homeHiddenSections.includes("activities")
+      },
+      {
+        id: "default-home-gallery",
+        school_id: schoolId,
+        page_slug: "home",
+        block_type: "gallery_feed",
+        title: content.homeGalleryTitle,
+        subtitle: content.homeGalleryDescription,
+        image_url: null,
+        button_label: null,
+        button_url: null,
+        config: { itemCount: 6, layout: "grid" },
+        position: 4,
+        is_visible: !content.homeHiddenSections.includes("gallery")
+      }
+    ],
+    profile: [
+      {
+        id: "default-profile-about",
+        school_id: schoolId,
+        page_slug: "profile",
+        block_type: "rich_text",
+        title: content.aboutTitle,
+        subtitle: content.aboutEyebrow,
+        image_url: null,
+        button_label: null,
+        button_url: null,
+        config: { body: content.aboutText },
+        position: 0,
+        is_visible: true
+      },
+      {
+        id: "default-profile-values",
+        school_id: schoolId,
+        page_slug: "profile",
+        block_type: "feature_cards",
+        title: school.name,
+        subtitle: "Visi, misi, dan nilai sekolah",
+        image_url: null,
+        button_label: null,
+        button_url: null,
+        config: {
+          cards: [
+            { title: content.profileVisionTitle, text: content.profileVisionText },
+            { title: content.profileMissionTitle, text: content.profileMissionText },
+            { title: content.profileValuesTitle, text: content.profileValuesText }
+          ]
+        },
+        position: 1,
+        is_visible: true
+      }
+    ],
+    news: [
+      {
+        id: "default-news-feed",
+        school_id: schoolId,
+        page_slug: "news",
+        block_type: "news_feed",
+        title: content.homeNewsTitle,
+        subtitle: content.homeNewsDescription,
+        image_url: null,
+        button_label: null,
+        button_url: null,
+        config: { itemCount: 12, layout: "grid" },
+        position: 0,
+        is_visible: true
+      }
+    ],
+    gallery: [
+      {
+        id: "default-gallery-feed",
+        school_id: schoolId,
+        page_slug: "gallery",
+        block_type: "gallery_feed",
+        title: content.homeGalleryTitle,
+        subtitle: content.homeGalleryDescription,
+        image_url: null,
+        button_label: null,
+        button_url: null,
+        config: { itemCount: 12, layout: "grid" },
+        position: 0,
+        is_visible: true
+      }
+    ],
+    contact: [
+      {
+        id: "default-contact-text",
+        school_id: schoolId,
+        page_slug: "contact",
+        block_type: "rich_text",
+        title: content.contactTitle,
+        subtitle: "Kontak",
+        image_url: null,
+        button_label: null,
+        button_url: null,
+        config: { body: content.contactDescription },
+        position: 0,
+        is_visible: true
+      },
+      {
+        id: "default-contact-cards",
+        school_id: schoolId,
+        page_slug: "contact",
+        block_type: "contact_cards",
+        title: "Informasi Kontak",
+        subtitle: "",
+        image_url: null,
+        button_label: null,
+        button_url: null,
+        config: {
+          cards: [
+            { title: "Email", text: content.contactEmail || school.contact_email || "-" },
+            { title: "Telepon", text: content.contactPhone || school.contact_phone || "-" },
+            { title: "Alamat", text: content.contactAddress || school.address || "-" }
+          ]
+        },
+        position: 1,
+        is_visible: true
+      }
+    ]
+  };
+
+  return defaults[page];
+}
+
+export async function getPageBuilderData() {
+  const supabase = createClient();
+  const { tenant, settings, content } = await getWebsiteSettings();
+  const { data, error } = await supabase
+    .from("page_blocks")
+    .select("*")
+    .eq("school_id", tenant.id)
+    .order("page_slug", { ascending: true })
+    .order("position", { ascending: true });
+
+  if (error) {
+    console.error("Failed to fetch page blocks", error);
+  }
+
+  const storedBlocks = coercePageBlocks(data as any[] | null);
+  const pageBlocks = Object.fromEntries(
+    PAGE_SLUGS.map((page) => {
+      const blocks = storedBlocks.filter((block) => block.page_slug === page);
+      return [page, blocks.length > 0 ? blocks : getDefaultPageBlocks(page, tenant, content)];
+    })
+  ) as Record<PageSlug, PageBlock[]>;
+
+  return {
+    tenant,
+    settings,
+    content,
+    pageBlocks
+  };
+}
+
+export async function getPageBlocks(page: PageSlug) {
+  const { tenant, content, pageBlocks } = await getPageBuilderData();
+  return {
+    tenant,
+    content,
+    blocks: pageBlocks[page].filter((block) => block.is_visible)
+  };
+}
+
 export async function getDashboardData() {
   const supabase = createClient();
   const tenant = await requireTenant();
@@ -271,12 +518,13 @@ export async function getDashboardCollections() {
   const tenant = await requireTenant();
   const { settings, content } = await getWebsiteSettings();
 
-  const [news, students, ppdb, payments, gallery] = await Promise.all([
+  const [news, students, ppdb, payments, gallery, activities] = await Promise.all([
     supabase.from("news").select("*").eq("school_id", tenant.id).order("published_at", { ascending: false }),
     supabase.from("students").select("*").eq("school_id", tenant.id).order("created_at", { ascending: false }),
     supabase.from("ppdb").select("*").eq("school_id", tenant.id).order("created_at", { ascending: false }),
     supabase.from("payments").select("*").eq("school_id", tenant.id).order("due_date", { ascending: true }),
-    supabase.from("gallery").select("*").eq("school_id", tenant.id).order("created_at", { ascending: false })
+    supabase.from("gallery").select("*").eq("school_id", tenant.id).order("created_at", { ascending: false }),
+    supabase.from("activities").select("*").eq("school_id", tenant.id).order("activity_date", { ascending: false })
   ]);
 
   return {
@@ -287,6 +535,7 @@ export async function getDashboardCollections() {
     students: (students.data as StudentItem[] | null) ?? [],
     ppdb: (ppdb.data as PPDBItem[] | null) ?? [],
     payments: (payments.data as PaymentItem[] | null) ?? [],
-    gallery: (gallery.data as GalleryItem[] | null) ?? []
+    gallery: (gallery.data as GalleryItem[] | null) ?? [],
+    activities: (activities.data as ActivityItem[] | null) ?? []
   };
 }

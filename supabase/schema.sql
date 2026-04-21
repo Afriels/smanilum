@@ -115,6 +115,23 @@ create table if not exists public.website_settings (
   unique (school_id, key)
 );
 
+create table if not exists public.page_blocks (
+  id uuid primary key default gen_random_uuid(),
+  school_id uuid not null references public.schools(id) on delete cascade,
+  page_slug text not null,
+  block_type text not null,
+  title text,
+  subtitle text,
+  image_url text,
+  button_label text,
+  button_url text,
+  config jsonb not null default '{}'::jsonb,
+  position integer not null default 0,
+  is_visible boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.payments (
   id uuid primary key default gen_random_uuid(),
   school_id uuid not null references public.schools(id) on delete cascade,
@@ -178,6 +195,8 @@ drop trigger if exists activities_updated_at on public.activities;
 create trigger activities_updated_at before update on public.activities for each row execute procedure public.handle_updated_at();
 drop trigger if exists gallery_updated_at on public.gallery;
 create trigger gallery_updated_at before update on public.gallery for each row execute procedure public.handle_updated_at();
+drop trigger if exists page_blocks_updated_at on public.page_blocks;
+create trigger page_blocks_updated_at before update on public.page_blocks for each row execute procedure public.handle_updated_at();
 drop trigger if exists payments_updated_at on public.payments;
 create trigger payments_updated_at before update on public.payments for each row execute procedure public.handle_updated_at();
 drop trigger if exists ppdb_updated_at on public.ppdb;
@@ -195,6 +214,7 @@ alter table public.payments enable row level security;
 alter table public.ppdb enable row level security;
 alter table public.subscriptions enable row level security;
 alter table public.website_settings enable row level security;
+alter table public.page_blocks enable row level security;
 
 create policy "public read schools" on public.schools
 for select using (true);
@@ -312,6 +332,21 @@ create policy "tenant website settings read" on public.website_settings
 for select using (true);
 
 create policy "tenant website settings manage" on public.website_settings
+for all using (
+  school_id = public.current_school_id()
+  and exists (
+    select 1 from public.users me
+    where me.id = auth.uid()
+      and me.school_id = public.current_school_id()
+      and me.role in ('super_admin', 'admin')
+  )
+)
+with check (school_id = public.current_school_id());
+
+create policy "tenant page blocks read" on public.page_blocks
+for select using (true);
+
+create policy "tenant page blocks manage" on public.page_blocks
 for all using (
   school_id = public.current_school_id()
   and exists (
