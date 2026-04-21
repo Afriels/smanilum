@@ -89,6 +89,10 @@ export const WEBSITE_SETTING_FIELDS = Object.keys(WEBSITE_SETTING_DEFAULTS) as A
 
 const PAGE_SLUGS: PageSlug[] = ["home", "profile", "news", "gallery", "contact"];
 
+function isMissingRelationError(error: { code?: string } | null) {
+  return error?.code === "PGRST205";
+}
+
 function normalizeSettings(rows: WebsiteSettingRow[] | null) {
   const settings: WebsiteSettingsMap = { ...WEBSITE_SETTING_DEFAULTS };
 
@@ -189,7 +193,7 @@ export async function getWebsiteSettings() {
     .eq("school_id", tenant.id)
     .order("key", { ascending: true });
 
-  if (error) {
+  if (error && !isMissingRelationError(error)) {
     console.error("Failed to fetch website settings", error);
   }
 
@@ -446,7 +450,7 @@ export async function getPageBuilderData() {
     .order("page_slug", { ascending: true })
     .order("position", { ascending: true });
 
-  if (error) {
+  if (error && !isMissingRelationError(error)) {
     console.error("Failed to fetch page blocks", error);
   }
 
